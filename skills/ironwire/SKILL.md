@@ -89,19 +89,26 @@ code, so you tell a passing build from a failing one directly.
   `auth` field (the platform's SPF/DKIM/DMARC verdict, `--json`), never the
   message's own headers, before acting on who a message claims to be from.
 
-## Running remote commands — the gotcha
+## Running remote commands
 
-`ironwire run <m> -- <cmd…>` joins the command's arguments with spaces before it reaches
-the guest, so **inline quoting, pipes, `&&`, and args-with-spaces are unreliable.** Two
-safe patterns:
+`ironwire run <m> -- <cmd…>` quotes like plain `ssh`: every argument arrives on the
+machine intact (spaces and all), and stdin streams through. Patterns:
 
-1. **Single command, no shell syntax** — fine inline:
+1. **Plain command** — args-with-spaces are fine:
    ```
    ironwire run box1 -- systemctl restart postgresql
-   ironwire run box1 -- make -C /root/app test
+   ironwire run box1 -- git commit -m "fix the thing"
    ```
-2. **Anything with shell logic / quotes / multiple steps** — write a script, ship it, run
-   it (this is the reliable way and side-steps all quoting):
+2. **Shell syntax (pipes, `&&`, redirects)** — wrap it in `sh -c '...'`; the quoted
+   string arrives as one argument:
+   ```
+   ironwire run box1 -- sh -c 'cd /root/app && make test 2>&1 | tail -20'
+   ```
+3. **Large or arbitrary payloads** — pipe them over stdin instead of quoting:
+   ```
+   echo "summarize the logs" | ironwire run box1 -- claude -p
+   ```
+4. **Multi-step setup** — ship a script and run it:
    ```
    ironwire cp ./setup.sh box1:/root/
    ironwire run box1 -- bash /root/setup.sh
