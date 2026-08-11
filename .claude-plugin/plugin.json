@@ -1,0 +1,6 @@
+{
+  "name": "ironwire",
+  "description": "Drive an ironwire VM fleet: create machines, push code, run commands, read results, tear down.",
+  "version": "0.1.0",
+  "author": { "name": "ironwire", "url": "https://ironwire.sh" }
+}
