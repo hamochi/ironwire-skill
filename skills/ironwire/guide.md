@@ -105,6 +105,35 @@ machine intact (spaces and all), and stdin streams through. Patterns:
    ironwire run box1 -- bash /root/setup.sh
    ```
 
+## Running Claude Code (or another agent) on a machine
+
+A machine is a disposable, isolated VM — the machine IS the sandbox, so the agent
+inside it can run with its own permission checks off. The pieces that are not
+guessable:
+
+```bash
+ironwire create claudebox
+ironwire run claudebox -- sh -c 'curl -fsSL https://claude.ai/install.sh | bash'
+ironwire env set ANTHROPIC_API_KEY sk-ant-... --machine=claudebox
+ironwire restart claudebox    # env vars land at next boot
+```
+
+Then each query is one command — pipe the prompt over stdin:
+
+```bash
+echo "review the code in /root/app" | \
+  ironwire run claudebox -- env IS_SANDBOX=1 claude -p --dangerously-skip-permissions
+```
+
+- `--dangerously-skip-permissions` is what makes non-interactive `-p` work (there is
+  no human to approve tool calls); it is the intended pattern inside a throwaway VM.
+- `ironwire run` executes as root, and claude refuses that flag as root unless
+  `IS_SANDBOX=1` is set. Set it inline as above, or once per machine:
+  `ironwire env set IS_SANDBOX 1 --machine=claudebox` (plus a restart), then run
+  through a login shell so the env applies: `bash -lc 'claude -p ...'`.
+- Conversation state persists on the machine's disk: add `--continue` to keep one
+  ongoing session across queries, `--output-format json` for parseable results.
+
 ## The full loop (laptop)
 
 ```bash
