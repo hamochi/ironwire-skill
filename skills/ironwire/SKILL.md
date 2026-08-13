@@ -184,7 +184,10 @@ A machine never gains admin powers, and its actions are attributed to it.
 
 - **Laptop:** set `IRONWIRE_CONTROL=<host:port>` (the SSH front door), or put
   `control = <host:port>` in `~/.config/ironwire/config`. Identity is your ssh-agent key
-  (the same key that enrolls your account), or `IRONWIRE_KEY=<path>`.
+  (the same key that enrolls your account), or `IRONWIRE_KEY=<path>`. To act as one
+  specific key, pass `--identity <keyfile>` (`-i`) or export the raw private-key PEM as
+  `IRONWIRE_IDENTITY` — an explicit key is used exclusively, with no agent/default
+  fallback (flag wins over env).
 - **Inside a machine:** nothing to configure — the control plane injects `IRONWIRE_CONTROL`,
   the machine identity, and the self-info vars above (`IRONWIRE_MACHINE_NAME` / `_IP` /
   `IRONWIRE_INSIDE=1`) at boot.
