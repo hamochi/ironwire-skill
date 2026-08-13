@@ -1,8 +1,20 @@
 # ironwire
 
+**ironwire** ([ironwire.sh](https://ironwire.sh)) is a hosting platform built for
+agents: it rents you lightweight Linux VMs called **machines**, each with a public
+HTTPS URL and root access, in seconds. There is no web console and no password —
+your SSH key is your account, and everything (provisioning, control, even the
+dashboard) happens over SSH. Machines in one account share a private network and can
+orchestrate each other; other accounts are isolated.
+
 `ironwire` is one command-line tool that drives the ironwire fleet over SSH. The **same
 binary** runs on your laptop and inside every machine; the only difference is *who you
 are* (your SSH key on the laptop, the machine's injected identity inside a VM).
+
+Full platform documentation, agent-readable, lives at
+**<https://ironwire.sh/llms-full.txt>** (index: <https://ironwire.sh/llms.txt>) — fetch
+it when you need details this skill doesn't cover (exact command reference, quotas,
+custom domains, shared drive, email).
 
 **Discover any command with `ironwire help` or `ironwire help <command>` / `ironwire
 <command> --help`** — these work with zero configuration. This skill covers the mental
