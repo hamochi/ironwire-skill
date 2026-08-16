@@ -85,13 +85,22 @@ code, so you tell a passing build from a failing one directly.
   secrets and config over hardcoding them in files on the machine:** the values are
   held by the control plane (sealed at rest) and injected at boot, so they aren't left
   in plaintext on the VM and survive a rebuild/reprovision.
+- **Egress proxies:** `proxy [list] / add <label> --target <host> --header 'N: v' /
+  attach <label> <machine> / detach / set-header / rm`. **The strongest option for
+  API keys — the secret never enters the VM at all:** attached machines call
+  `$PROXY_<LABEL>` (e.g. `curl $PROXY_STRIPE/v1/...`) and the platform injects the
+  stored header in flight. Declare SDK envs on the proxy
+  (`--env 'OPENAI_BASE_URL=$PROXY_URL/v1' --env 'OPENAI_API_KEY=unused'`) so stock
+  SDKs work unmodified. Attach/detach is live; the env vars land on next restart.
+  From inside a machine you can `proxy list` (values redacted) but never mutate —
+  proxy management is owner-only, from a laptop or the dashboard.
 - **Stats:** `stats <machine> [--range=1h|24h|7d|30d]` — cpu/mem/disk, current values +
   history (30 days retained; stopped/paused periods are gaps). **This is how you
   investigate a slow or crashing machine:** `ironwire stats box1 --range=24h --json`,
   then read the series for memory climbing or disk filling before acting.
 - **Info/account:** `usage` · `whoami` · `images` · `keys` · `link` · `unlink` · `drive`
 - **Inbound email:** `email <machine> on` gives the machine a catch-all inbox —
-  email sent to `*@<machine>.<handle>.<content-domain>` (any local-part) is held by the
+  email sent to `*@<machine>-<handle>.<content-domain>` (any local-part) is held by the
   platform (even while the machine is stopped) and pulled with
   `email <machine> [--new]` (list), `email <machine> get <id>` (full raw RFC 5322
   message to stdout — pipe it to a parser), `email <machine> rm <id>` (delete =
