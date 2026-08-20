@@ -55,7 +55,8 @@ code, so you tell a passing build from a failing one directly.
   `pause` · `resume` · `copy` · `resize`
 - **Sizing (vm-sizing):** `create --cpu=<n|max> --mem=<size|max> --disk=<size|max>` picks a
   machine's size (blank = defaults); `resize <name>` with the same flags changes it later —
-  applied on the next restart, disk grow-only. Cores are a per-machine ceiling, not summed
+  applied on the next restart, disk grow-only. `resize <name> --restart=<always|on-failure|never>`
+  changes the crash-recovery policy in place (live). Cores are a per-machine ceiling, not summed
   against your quota; disk likewise charges nothing up front — the account's
   storage pool is consumed by data machines actually store, not by disk sizes
   (pooled-disk-quota).
@@ -150,8 +151,8 @@ echo "review the code in /root/app" | \
   no human to approve tool calls); it is the intended pattern inside a throwaway VM.
 - `ironwire run` executes as root, and claude refuses that flag as root unless
   `IS_SANDBOX=1` is set. Set it inline as above, or once per machine:
-  `ironwire env set IS_SANDBOX 1 --machine=claudebox` (plus a restart), then run
-  through a login shell so the env applies: `bash -lc 'claude -p ...'`.
+  `ironwire env set IS_SANDBOX 1 --machine=claudebox` (plus a restart); managed
+  env vars are present in every ssh session, so plain `ironwire run` sees them.
 - Conversation state persists on the machine's disk: add `--continue` to keep one
   ongoing session across queries, `--output-format json` for parseable results.
 
