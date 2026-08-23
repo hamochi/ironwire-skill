@@ -80,6 +80,9 @@ code, so you tell a passing build from a failing one directly.
   **cp takes two arguments and the remote side starts with the machine NAME** —
   `ironwire cp /tmp/app box1:/root/` is right; `ironwire cp /tmp/app:/root/` is
   wrong (there is no machine called `/tmp/app`).
+  **`<dst>` works like plain `cp`:** an existing directory receives the copy under the
+  source's own name, anything else names it — `ironwire cp ./agents-e2e.yaml
+  box1:/root/agents.yaml` renames on the way in. The destination's parent must exist.
 - **Env:** `env [list] / set <N> <V> / rm <N>`, optionally `--machine=<name>`
   (account-global by default; machine var overrides). **Applies on the machine's next
   boot — restart to apply.** `IRONWIRE_*` names are reserved. **Prefer this for
