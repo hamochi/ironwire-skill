@@ -1,10 +1,12 @@
 ---
 name: ironwire
 description: >-
-  Drive the ironwire VM fleet with the `ironwire` CLI — create machines, push code, run
-  commands remotely, read results, tear down. Use when the user wants to build/test/run
-  software on a remote ironwire machine, or when an agent inside a machine needs to
-  coordinate sibling machines. Works identically on a laptop and inside a machine.
+  Drive the ironwire VM fleet with the `ironwire` CLI — sign up for an account, create
+  machines, push code, run commands remotely, read results, tear down. Use when the user
+  wants to build/test/run software on a remote ironwire machine, when they need an
+  ironwire account created (one command returns a payment link), or when an agent inside
+  a machine needs to coordinate sibling machines. Works identically on a laptop and
+  inside a machine.
 ---
 
 # ironwire
@@ -28,6 +30,36 @@ custom domains, shared drive, email).
 **Discover any command with `ironwire help` or `ironwire help <command>` / `ironwire
 <command> --help`** — these work with zero configuration. This skill covers the mental
 model and gotchas; lean on `--help` for exact flags and args.
+
+## Getting an account
+
+No account yet? One command creates one — no web signup, no password. **The key
+you sign up with becomes the account**, so run this as whichever key should own it:
+
+```sh
+ironwire signup <handle> --accept-terms
+```
+
+It does not wait. It reserves the handle and prints a **payment link** and a
+**QR code** of that link. Pass the link to whoever is paying — or show them the
+QR, which they can scan and pay on a phone rather than the machine you are on.
+The moment the payment lands the account exists and the key is in: just connect,
+nothing else to run.
+
+- `--accept-terms` is required — it accepts <https://ironwire.sh/terms> and
+  <https://ironwire.sh/privacy>. There is no way to buy without it.
+- `--units N` buys a larger pool; omit it for the smallest plan, resizable later.
+- Running signup again before payment returns the **same** link. It never opens a
+  second checkout and never charges twice.
+- Reserved the wrong handle? `ironwire signup --abort` releases it so you can
+  retake immediately instead of waiting out the reservation.
+- `--json` returns the link, plan and expiry as fields.
+
+You don't need the CLI installed to sign up — plain SSH does the same thing:
+
+```sh
+ssh ironwire.sh signup <handle> --accept-terms
+```
 
 ## The one rule
 
