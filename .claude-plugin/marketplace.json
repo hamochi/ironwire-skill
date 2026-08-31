@@ -1,11 +1,14 @@
 {
   "name": "ironwire",
-  "owner": { "name": "ironwire", "url": "https://ironwire.sh" },
+  "owner": {
+    "name": "ironwire",
+    "url": "https://ironwire.sh"
+  },
   "plugins": [
     {
       "name": "ironwire",
       "source": "./",
-      "description": "Drive an ironwire VM fleet: create machines, push code, run commands, read results, tear down."
+      "description": "Drive an ironwire VM fleet: sign up for an account, create machines, push code, run commands, read results, tear down."
     }
   ]
 }
