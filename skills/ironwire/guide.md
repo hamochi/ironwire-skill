@@ -66,11 +66,19 @@ code, so you tell a passing build from a failing one directly.
 
 ## Networking model — read this before wiring services together
 
-- Each machine has a **private internal IP** on a shared bridge (`10.0.0.0/24`), shown as
-  `ip` in `ironwire info <name> --json` (and the `network` hint there).
-- **Your machines can reach each other** on those IPs on **any port** — wire services
-  together with the internal IP (the app connects to the db at e.g. `10.0.0.5:5432`).
-  Traffic from *other accounts* is blocked.
+- **Every machine answers at `<name>.internal` from your other machines** — the name it
+  already has, no setup inside either machine. **Wire services together with the name,
+  never the address**: `postgres://app@db.internal:5432/appdb`. The name follows the
+  machine when it is destroyed and recreated; a hardcoded address silently breaks.
+- Each machine also has a **private internal IP** on a shared bridge (`10.0.0.0/24`),
+  shown as `ip` in `ironwire info <name> --json` (and the `network` hint there). Read it
+  for diagnostics; do not put it in a config.
+- **Your machines can reach each other** on any port, by name or address. Traffic from
+  *other accounts* is blocked — and another account's `db.internal` is invisible to you,
+  indistinguishable from a name that does not exist.
+- A **stopped** machine still resolves; the connection is refused. That tells you it is
+  not running rather than that it does not exist. A machine that has **never booted** has
+  no address yet, so its name does not resolve until it does.
 - **The internet cannot reach a machine's arbitrary ports.** The only public inbound
   entrypoint is each machine's **HTTPS URL** (`url` in `info`), which fronts the guest's
   web app on port **8000**. So: bind a service to port **8000** to expose it publicly over
@@ -201,14 +209,16 @@ ironwire rm box1                            # tear down
 ## Two machines that talk to each other (pattern)
 
 ```bash
-ironwire create db  --json ; DB_IP=$(ironwire info db  --json | jq -r .machine.ip)
+ironwire create db  --json
 ironwire create app --json
-# provision db to listen on its internal IP, then point the app at it:
-ironwire env set DATABASE_URL "postgres://app@$DB_IP:5432/appdb" --machine=app
+# point the app at the db BY NAME — no lookup, no jq, nothing to refresh later:
+ironwire env set DATABASE_URL "postgres://app@db.internal:5432/appdb" --machine=app
 ironwire restart app          # env applies on next boot
 ```
-The app reaches the db on `$DB_IP` because they're in the same account on the internal
-bridge. Expose the app publicly by binding it to port 8000 → its HTTPS `url`.
+`db.internal` resolves because both machines are in the same account. **Do not look the
+address up and bake it in** — that is the one thing that breaks: destroy and recreate
+`db` and it comes back on a different address, while `db.internal` keeps working with
+nothing to update. Expose the app publicly by binding it to port 8000 → its HTTPS `url`.
 
 ## Inside a machine
 
@@ -217,8 +227,9 @@ plane injects a few env vars at boot so a script knows *who it is* without askin
 
 - `IRONWIRE_MACHINE_NAME` — this machine's own name (e.g. to skip yourself when iterating
   `ironwire list`, or to label output/logs)
-- `IRONWIRE_MACHINE_IP` — this machine's internal bridge IP (hand it to a sibling that
-  must connect back to you; no `jq` round-trip needed)
+- `IRONWIRE_MACHINE_IP` — this machine's internal bridge IP. For a sibling that must
+  connect back to you, hand it `$IRONWIRE_MACHINE_NAME.internal` instead — the address
+  is for diagnostics, the name is what survives a recreate.
 - `IRONWIRE_INSIDE=1` — set only inside a machine (branch laptop-vs-VM behavior on it)
 
 A machine
