@@ -138,6 +138,33 @@ code, so you tell a passing build from a failing one directly.
   SDKs work unmodified. Attach/detach is live; the env vars land on next restart.
   From inside a machine you can `proxy list` (values redacted) but never mutate —
   proxy management is owner-only, from a laptop or the dashboard.
+- **Outposts:** `outpost [list] / add <name> / info <name> / relink <name> /
+  domain <name> <fqdn> / rm <name>`. An outpost is a machine the USER owns — a Pi,
+  a Mac mini, a GPU box — connected by an agent it dials out from. It appears in
+  `list` beside the VMs with `KIND=outpost`, answers to the same key, and serves the
+  same `https://<name>-<handle>.<content-domain>` URL. **Treat it as another
+  addressable machine:** `ssh <name>@<host>` and the file manager work on it, and a VM
+  in the same account reaches it at `<name>.internal` on its published ports.
+  **From inside a machine, reaching an outpost's shell or files needs orchestration
+  on** — the same switch as reaching a sibling VM, and refused the same way
+  (`this machine is not allowed to reach other machines (orchestration is off)`).
+  It is somebody's home hardware, so it is never EASIER to reach than a sibling.
+  **What it is NOT:** you cannot `create`, `resize`, `stop`, `start`, `pause`,
+  `snapshot` or `cp` an outpost — we run no hypervisor on someone's hardware, and
+  those verbs answer `<name> is an outpost; it cannot be …`. Its states are its own:
+  `pending` (claimed, never connected), `online`, `offline · <age>`. **Offline is
+  normal, not a fault** — a machine at home sleeps; its URL then serves a page saying
+  so and it returns on its own. Nothing about it can be restarted from here.
+  **Capabilities are fixed at link time, at the hardware:** whether it offers a shell,
+  which ports it publishes, and which directory the file manager sees are declared
+  when its owner runs the install command, and no command here can widen them.
+  `outpost add` prints the two-step install for the owner to run at that machine —
+  a `curl … | sh` that only installs the agent, then
+  `sudo ironwire-outpost link <code> --hub-pin <pin> [flags]`. Relay it verbatim: the
+  pin is what stops the machine trusting an impostor at link time, and the flags are
+  fixed once it links. `relink` reissues the code; changing capabilities on a machine
+  that is already linked needs `link --relink` there. `rm` cuts the tunnel and frees
+  the name, leaving the agent installed but inert on the user's machine.
 - **Stats:** `stats <machine> [--range=1h|24h|7d|30d]` — cpu/mem/disk, current values +
   history (30 days retained; stopped/paused periods are gaps). **This is how you
   investigate a slow or crashing machine:** `ironwire stats box1 --range=24h --json`,
@@ -244,7 +271,8 @@ plane injects a few env vars at boot so a script knows *who it is* without askin
 - `IRONWIRE_INSIDE=1` — set only inside a machine (branch laptop-vs-VM behavior on it)
 
 A machine
-can create/delete/command **sibling** machines only if its owner turned **orchestration
+can create/delete/command **sibling** machines — and reach the account's **outposts** —
+only if its owner turned **orchestration
 on** for it (dashboard: machine → actions menu); otherwise fleet commands are refused.
 A machine never gains admin powers, and its actions are attributed to it.
 
