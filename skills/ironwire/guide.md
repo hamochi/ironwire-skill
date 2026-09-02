@@ -132,7 +132,8 @@ code, so you tell a passing build from a failing one directly.
   a Mac mini, a GPU box — connected by an agent it dials out from. It appears in
   `list` beside the VMs with `KIND=outpost`, answers to the same key, and serves the
   same `https://<name>-<handle>.<content-domain>` URL. **Treat it as another
-  addressable machine:** `ssh <name>@<host>` and the file manager work on it, and a VM
+  addressable machine:** `ssh <name>@<host>`, the dashboard's Enter (the same framed
+  shell, tabs and F2/F3 a VM gets) and the file manager all work on it, and a VM
   in the same account reaches it at `<name>.internal` on its published ports.
   **From inside a machine, reaching an outpost's shell or files needs orchestration
   on** — the same switch as reaching a sibling VM, and refused the same way
