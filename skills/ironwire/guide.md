@@ -5,7 +5,7 @@ agents: it rents you lightweight Linux VMs called **machines**, each with a publ
 HTTPS URL and root access, in seconds. There is no web console and no password —
 your SSH key is your account, and everything (provisioning, control, even the
 dashboard) happens over SSH. Machines in one account share a private network and can
-orchestrate each other; other accounts are isolated.
+command each other when their owner allows it; other accounts are isolated.
 
 `ironwire` is one command-line tool that drives the ironwire fleet over SSH. The **same
 binary** runs on your laptop and inside every machine; the only difference is *who you
@@ -106,6 +106,8 @@ code, so you tell a passing build from a failing one directly.
   pool). `resize` still grows a ceiling later; ceilings never shrink.
 - **Cross-machine:** `run <machine> -- <cmd…>` (exit code forwarded) ·
   `cp <src> <machine>:<dst>` / `cp <machine>:<src> <dst>` (bidirectional, tar-streamed).
+  **`<machine>` may be an outpost** — the user's own hardware answers both verbs the
+  same way, so a fleet script never has to know which kind it was handed.
   **cp takes two arguments and the remote side starts with the machine NAME** —
   `ironwire cp /tmp/app box1:/root/` is right; `ironwire cp /tmp/app:/root/` is
   wrong (there is no machine called `/tmp/app`).
@@ -135,12 +137,20 @@ code, so you tell a passing build from a failing one directly.
   addressable machine:** `ssh <name>@<host>`, the dashboard's Enter (the same framed
   shell, tabs and F2/F3 a VM gets) and the file manager all work on it, and a VM
   in the same account reaches it at `<name>.internal` on its published ports.
-  **From inside a machine, reaching an outpost's shell or files needs orchestration
-  on** — the same switch as reaching a sibling VM, and refused the same way
-  (`this machine is not allowed to reach other machines (orchestration is off)`).
-  It is somebody's home hardware, so it is never EASIER to reach than a sibling.
+  **`run` and `cp` work on an outpost** exactly as they do on a VM — the same
+  exit-code contract, the same tar-streamed copy — provided it was linked with
+  `--shell`. Without one there is no worker process on that machine at all
+  (`<name> was linked without a shell — re-link it with --shell to offer one`), and an
+  outpost that is offline or has never connected refuses with its own reason.
+  **From inside a machine, reaching an outpost — its shell, its files, `run` or `cp` —
+  needs fleet access on**: the same switch as reaching a sibling VM, refused the same
+  way (`this machine is not allowed to reach other machines (fleet access is off)`).
+  Its owner can also stop it **taking orders** (dashboard: outpost → actions menu),
+  which refuses even a machine that HAS fleet access
+  (`<name> takes no orders from other machines`). It is somebody's home hardware, so
+  it is never EASIER to reach than a sibling.
   **What it is NOT:** you cannot `create`, `resize`, `stop`, `start`, `pause`,
-  `snapshot` or `cp` an outpost — we run no hypervisor on someone's hardware, and
+  `snapshot` or `copy` an outpost — we run no hypervisor on someone's hardware, and
   those verbs answer `<name> is an outpost; it cannot be …`. Its states are its own:
   `pending` (claimed, never connected), `online`, `offline · <age>`. **Offline is
   normal, not a fault** — a machine at home sleeps; its URL then serves a page saying
@@ -262,8 +272,11 @@ plane injects a few env vars at boot so a script knows *who it is* without askin
 
 A machine
 can create/delete/command **sibling** machines — and reach the account's **outposts** —
-only if its owner turned **orchestration
+only if its owner turned **fleet access
 on** for it (dashboard: machine → actions menu); otherwise fleet commands are refused.
+Even with it on, any machine or outpost whose owner turned **takes orders off** refuses
+(`<name> takes no orders from other machines`) — that switch is about commanding only,
+so such a machine still serves its URL, its published ports and its `.internal` name.
 A machine never gains admin powers, and its actions are attributed to it.
 
 ## Setup
@@ -281,5 +294,5 @@ A machine never gains admin powers, and its actions are attributed to it.
 ## Not this tool's job
 
 Interactive shells (`ssh <machine>@<host>` or the dashboard's framed shell), local commands,
-per-machine settings (delete protection / orchestration — toggled in the dashboard's machine actions
-menu), and the web/landing surfaces. `ironwire` is the scriptable, non-interactive surface.
+per-machine settings (delete protection / fleet access / takes orders — toggled in the dashboard's
+machine actions menu), and the web/landing surfaces. `ironwire` is the scriptable, non-interactive surface.
