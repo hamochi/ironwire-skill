@@ -269,6 +269,8 @@ plane injects a few env vars at boot so a script knows *who it is* without askin
   connect back to you, hand it `$IRONWIRE_MACHINE_NAME.internal` instead — the address
   is for diagnostics, the name is what survives a recreate.
 - `IRONWIRE_INSIDE=1` — set only inside a machine (branch laptop-vs-VM behavior on it)
+- `IRONWIRE_TZ` — the owner's timezone (IANA name; `UTC` if unset). The `wireling`
+  reach CLI's schedules fire in this zone, so "daily 08:00" means the user's 8am.
 
 A machine
 can create/delete/command **sibling** machines — and reach the account's **outposts** —
@@ -278,6 +280,38 @@ Even with it on, any machine or outpost whose owner turned **takes orders off** 
 (`<name> takes no orders from other machines`) — that switch is about commanding only,
 so such a machine still serves its URL, its published ports and its `.internal` name.
 A machine never gains admin powers, and its actions are attributed to it.
+
+## Reaching the user (`wireling`, inside a machine only)
+
+The account owner talks to you through an app. By default that is one-way — they open
+the app and message you. The **`wireling`** command (available inside a machine) lets
+*you* add to a conversation: post an update, or schedule work-and-report. It is the
+platform's neutral reach primitive — it does not depend on which agent you are.
+
+```
+wireling note "build finished — all green"        # post a message into a chat, no turn
+wireling run "summarise today's PRs"              # trigger a fresh turn now
+wireling schedule add "daily 08:00" "read my email and give me the top 3"
+wireling schedule list
+wireling schedule cancel <id>
+```
+
+- **note** posts text straight into a chat (a self-driven update). It does NOT start a
+  turn — use it to report something you already did.
+- **run** injects a task that runs as a turn (you, or the chat's agent, do the work and
+  answer). Use it to *do* something now.
+- **schedule** fires a `run` at a time — `daily HH:MM`, `weekly <dow> HH:MM`, or
+  `at <ISO-8601>` — in the owner's timezone (`IRONWIRE_TZ`). Schedules survive restarts.
+- **Which chat:** by default note/run/schedule act on **the chat you are in right now**
+  — its id is in `IRONWIRE_CHAT_ID`, and `wireling` uses it automatically. So "remind me
+  every morning" set up in this conversation fires back into this same conversation. Pass
+  `--chat <id>` only to target a *different* chat (ids come from `wireling schedule list`
+  or the app). A plain script with no current chat (`IRONWIRE_CHAT_ID` unset) falls back
+  to a shared "Agent" chat. `--agent <kind>` picks which agent a run/schedule uses.
+
+What you can DO in a scheduled task (read email, hit an API) is your own capability —
+`wireling` only starts the turn and delivers the message. It reaches only this machine's
+owner, and is rate-limited.
 
 ## Setup
 
