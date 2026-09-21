@@ -281,6 +281,39 @@ Even with it on, any machine or outpost whose owner turned **takes orders off** 
 so such a machine still serves its URL, its published ports and its `.internal` name.
 A machine never gains admin powers, and its actions are attributed to it.
 
+## Connected services — Linear, GitHub… (inside a machine)
+
+The owner can connect third-party services to their account and attach them to
+machines. **No key or token is ever on the machine** — the platform holds the credential
+and adds it on the way out — so there is nothing to find, paste or configure. Don't ask
+the user for an API key, and don't look for one.
+
+```sh
+ironwire conn list                                  # what THIS machine has, and how to use each
+ironwire conn request linear                        # ask the owner — their phone rings; this WAITS for the tap
+ironwire conn request github --repo acme/api        # GitHub requests name the repositories (repeat --repo)
+ironwire conn tools linear                          # the service's own tools   (--json: with argument schemas)
+ironwire conn call linear list_issues '{"limit": 10}'   # run one; prints the service's result
+```
+
+- **Missing a service? Ask.** `conn request` blocks (up to 4 minutes) until the owner
+  taps approve in the ironwire app, then prints what was attached; it works at once, no
+  restart. If it prints "still waiting", run it again — asking again never rings the
+  phone twice. A machine can only ever *ask*: attaching, detaching and removing are the
+  owner's (`conn attach|detach|rm`, or the app).
+- **GitHub: plain git just works.** With GitHub attached, `git clone https://github.com/owner/repo`,
+  `pull` and `push` need no login. Only the repositories the owner picked for this
+  machine are reachable; others look like "not found" — ask for them with
+  `conn request github --repo owner/other`. `gh` is **not** logged in: use
+  `conn call github …` for pull requests and issues. (`git remote get-url` shows a
+  `…proxy…` address — that is the platform's proxy, working as intended.)
+- **Your own code** can call a service's API with no key through `$CONN_<NAME>_URL`
+  (e.g. `$CONN_LINEAR_URL/graphql`) — listed by `conn list`, set at the machine's next boot.
+- Agents that speak MCP (Claude Code, Codex, Gemini) already have all of this as tools —
+  `connections_list`, `connections_request`, `connections_tools`, `connections_call`,
+  plus the fleet verbs — from the pre-registered `ironwire mcp` server. The tools and
+  these commands are the same thing with the same permissions; use whichever you have.
+
 ## Reaching the user (`wireling`, inside a machine only)
 
 The account owner talks to you through an app. By default that is one-way — they open
