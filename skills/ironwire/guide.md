@@ -235,6 +235,56 @@ echo "review the code in /root/app" | \
 - Conversation state persists on the machine's disk: add `--continue` to keep one
   ongoing session across queries, `--output-format json` for parseable results.
 
+## Agent machines & custom agents (`--image=wireling`)
+
+An **agent machine** is a machine created from the `wireling` image —
+`ironwire create scout --image=wireling`. Only it runs the small daemon the owner's
+phone app talks to, and only it ships the chat agents (Claude Code, Codex, Gemini CLI,
+pi) and the `wireling` command below. A machine on the default image has none of this.
+
+Any agent that speaks ACP (Agent Client Protocol: JSON-RPC over stdio, what Zed uses)
+can be added as a chat engine on an agent machine. One JSON manifest per agent in
+`/etc/wireling/agents.d/` — `kind`, `label`, an absolute `bin`, optional `args` /
+`models` / `modelEnv` — then the owner restarts the agent from the app (Chat settings →
+Agent session → Restart agent); manifests are read once at daemon start. `pi` ships this
+way: `cat /etc/wireling/agents.d/pi.json` is the whole recipe. Custom agents are set up
+over SSH, sign-in included — the app has no Connect button for them and shows them as
+Ready; an unconfigured one fails its turn with its own error.
+
+**Installing a custom agent yourself.** Installers and setup wizards (`openclaw
+onboard`, `hermes setup`) are interactive: menus, key prompts, OAuth/device-login links.
+You have no TTY, so give the wizard one with `tmux` and drive it: start it detached, read
+its screen, answer, repeat. Relay anything that needs the user — which provider, an API
+key, a login URL to open — to them, then feed their answer back. Two cases:
+
+1. **On the machine you are in** (`IRONWIRE_INSIDE=1`):
+   ```bash
+   tmux new -d -s setup -x 200 -y 50
+   tmux send-keys -t setup 'hermes setup' Enter
+   sleep 2; tmux capture-pane -pt setup      # read the current prompt / menu
+   tmux send-keys -t setup Down Enter         # pick a menu item
+   tmux send-keys -t setup 'sk-…' Enter       # answer a key prompt (the key came from the user)
+   tmux kill-session -t setup                 # when the wizard says it is done
+   ```
+   A login URL the wizard prints goes to the user (`wireling note`, or your chat reply);
+   keep polling `capture-pane` until it reports signed in. Then write the manifest and
+   ask the user to restart the agent from the app.
+2. **On a new or other machine** — use the `ironwire` CLI, and create it as an agent
+   machine: `ironwire create agentbox --image=wireling`. The same tmux loop works
+   remotely, one `ironwire run` per step (tmux commands need no TTY themselves; args
+   arrive intact, so quote exactly as above):
+   ```bash
+   ironwire run agentbox -- tmux new -d -s setup -x 200 -y 50
+   ironwire run agentbox -- tmux send-keys -t setup 'hermes setup' Enter
+   ironwire run agentbox -- tmux capture-pane -pt setup
+   ```
+   Non-interactive steps are plain `ironwire run` (`npm install -g …`, the manifest via
+   `ironwire cp`), and keys can go in as `ironwire env set … --machine=agentbox` instead
+   of being typed into the wizard.
+
+Full manifest schema plus step-by-step recipes for **OpenClaw** and **Hermes Agent**:
+<https://ironwire.sh/documentation/agents> (also in `llms-full.txt`).
+
 ## The full loop (laptop)
 
 ```bash
