@@ -261,9 +261,10 @@ pi) and the `wireling` command below. A machine on the default image has none of
 Any agent that speaks ACP (Agent Client Protocol: JSON-RPC over stdio, what Zed uses)
 can be added as a chat engine on an agent machine. One JSON manifest per agent in
 `/etc/wireling/agents.d/` — `kind`, `label`, an absolute `bin`, optional `args` /
-`models` / `modelEnv` — then the owner restarts the agent from the app (Chat settings →
-Agent session → Restart agent); manifests are read once at daemon start. `pi` ships this
-way: `cat /etc/wireling/agents.d/pi.json` is the whole recipe. Custom agents are set up
+`models` / `modelEnv`. The folder is watched: a new file is in the app's agent picker
+within seconds, no restart (a changed or removed file applies at the next agent
+restart, Chat settings → Agent session → Restart agent). `pi` ships this way:
+`cat /etc/wireling/agents.d/pi.json` is the whole recipe. Custom agents are set up
 over SSH, sign-in included — the app has no Connect button for them and shows them as
 Ready; an unconfigured one fails its turn with its own error.
 
@@ -284,7 +285,8 @@ key, a login URL to open — to them, then feed their answer back. Two cases:
    ```
    A login URL the wizard prints goes to the user (`wireling note`, or your chat reply);
    keep polling `capture-pane` until it reports signed in. Then write the manifest and
-   ask the user to restart the agent from the app.
+   tell the user the agent is in their picker (`journalctl -u wireling-daemon` names
+   the reason if it is not).
 2. **On a new or other machine** — use the `ironwire` CLI, and create it as an agent
    machine: `ironwire create agentbox --image=wireling`. The same tmux loop works
    remotely, one `ironwire run` per step (tmux commands need no TTY themselves; args
