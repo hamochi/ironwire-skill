@@ -300,6 +300,13 @@ key, a login URL to open — to them, then feed their answer back. Two cases:
    `ironwire cp`), and keys can go in as `ironwire env set … --machine=agentbox` instead
    of being typed into the wizard.
 
+Two gotchas when driving this remotely: `pkill -f <pattern>` through `ironwire run …
+sh -c` matches the invoking shell itself and kills it (exit 143) — end a wizard with
+`tmux kill-session` instead; and services that are `systemd --user` units (OpenClaw's
+gateway and node host) need a user session first (`dbus-user-session`, `loginctl
+enable-linger root`, `XDG_RUNTIME_DIR=/run/user/0` in every later shell) — the
+recipe has the exact sequence.
+
 Full manifest schema plus step-by-step recipes for **OpenClaw** and **Hermes Agent**:
 <https://ironwire.sh/documentation/agents> (also in `llms-full.txt`).
 
