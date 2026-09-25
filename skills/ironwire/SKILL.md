@@ -307,6 +307,13 @@ gateway and node host) need a user session first (`dbus-user-session`, `loginctl
 enable-linger root`, `XDG_RUNTIME_DIR=/run/user/0` in every later shell) — the
 recipe has the exact sequence.
 
+OpenClaw specifically (2026.9.x): its ACP bridge refuses per-session MCP servers, so
+the chat opens without the ironwire tools until they are added on its side —
+`openclaw mcp set ironwire '{"command":"/opt/ironwire/bin/ironwire","args":["mcp"]}'`;
+and its shell commands wait for a human approval nobody can give from the app unless
+`openclaw config set tools.exec.mode full` (a machine is the sandbox; keep the default
+on an outpost). Its cron/heartbeat jobs reach the owner with `wireling note`.
+
 Full manifest schema plus step-by-step recipes for **OpenClaw** and **Hermes Agent**:
 <https://ironwire.sh/documentation/agents> (also in `llms-full.txt`).
 
